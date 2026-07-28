@@ -1,0 +1,21 @@
+{
+  "name": "BNPL Loan Calculator",
+  "short_name": "BNPL Calc",
+  "description": "BNPL loan repayment calculator for VIDA",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#0F0D35",
+  "background_color": "#F9FAFB",
+  "display": "standalone",
+  "start_url": "/"
+}
