@@ -1,13 +1,21 @@
+"use client";
+
 import React from "react";
-import { Box, Flex, Text, Stack } from "@chakra-ui/react";
+import { Box, Button, Flex, Text, Stack } from "@chakra-ui/react";
 import { RepaymentResult } from "@/lib/calculateRepayment";
 import { ResultStat } from "./ResultStat";
+import { usePostHog } from "posthog-js/react";
+
+const WHATSAPP_URL =
+  "https://wa.me/2349069890516?text=Hi,%20I%20am%20interested%20in%20your%20Buy%20Now%20Pay%20Later%20Service";
 
 interface RepaymentSummaryCardProps {
   result: RepaymentResult | null;
 }
 
 export function RepaymentSummaryCard({ result }: RepaymentSummaryCardProps) {
+  const posthog = usePostHog();
+
   if (!result) {
     return (
       <Flex h="full" minH="250px" align="center" justify="center" p={6}>
@@ -22,8 +30,13 @@ export function RepaymentSummaryCard({ result }: RepaymentSummaryCardProps) {
     return `₦${val.toLocaleString("en-US")}`;
   };
 
+  const handleGetStarted = () => {
+    posthog.capture("whatsapp_cta_clicked");
+    window.open(WHATSAPP_URL, "_blank", "noopener,noreferrer");
+  };
+
   return (
-    <Box>
+    <Box display="flex" flexDirection="column" h="full">
       <Stack gap={4} mb={6}>
         <ResultStat
           label="Down Payment"
@@ -39,9 +52,25 @@ export function RepaymentSummaryCard({ result }: RepaymentSummaryCardProps) {
         />
       </Stack>
 
-      <Text color="resultLabel" fontSize="sm" textAlign="left">
+      <Text color="resultLabel" fontSize="sm" textAlign="left" mb={5}>
         N.B: Repayment calculation is based on down payment and tenor.
       </Text>
+
+      <Button
+        onClick={handleGetStarted}
+        w="full"
+        h="50px"
+        bg="primary"
+        color="white"
+        fontWeight="semibold"
+        fontSize="md"
+        borderRadius="md"
+        cursor="pointer"
+        _hover={{ bg: "#1a1754" }}
+        mt="auto"
+      >
+        Get Started
+      </Button>
     </Box>
   );
 }
