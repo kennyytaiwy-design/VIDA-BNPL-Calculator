@@ -155,8 +155,8 @@ export function LoanDetailsForm({ onCalculate }: LoanDetailsFormProps) {
   };
 
   return (
-    <Box as="form" onSubmit={handleSubmit}>
-      <Stack gap={6}>
+    <Box as="form" onSubmit={handleSubmit} display="flex" flexDirection="column" flex="1" w="full">
+      <Stack gap={6} flex="1">
         {/* Item Cost Field */}
         <Field.Root w="full">
           <Field.Label fontWeight="medium" fontSize="sm" color="primary" mb={1.5}>
@@ -243,7 +243,7 @@ export function LoanDetailsForm({ onCalculate }: LoanDetailsFormProps) {
           disabled={!isFormValid}
           w="full"
           h="50px"
-          mt={2}
+          mt="auto"
           bg={isFormValid ? "primary" : "disabledButton"}
           color="white"
           fontWeight="semibold"

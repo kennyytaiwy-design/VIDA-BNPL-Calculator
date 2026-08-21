@@ -49,7 +49,7 @@ export default function Home() {
                 Loan Details
               </Heading>
             </Box>
-            <Box p={{ base: 4, md: 6 }} flex="1">
+            <Box p={{ base: 4, md: 6 }} flex="1" display="flex" flexDirection="column">
               <LoanDetailsForm onCalculate={handleCalculate} />
             </Box>
           </Box>
@@ -71,7 +71,7 @@ export default function Home() {
                 Repayment Summary
               </Heading>
             </Box>
-            <Box p={{ base: 4, md: 6 }} flex="1">
+            <Box p={{ base: 4, md: 6 }} flex="1" display="flex" flexDirection="column">
               <RepaymentSummaryCard result={repaymentResult} />
             </Box>
           </Box>

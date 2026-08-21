@@ -18,7 +18,7 @@ export function RepaymentSummaryCard({ result }: RepaymentSummaryCardProps) {
 
   if (!result) {
     return (
-      <Flex h="full" minH="250px" align="center" justify="center" p={6}>
+      <Flex flex="1" w="full" minH="250px" align="center" justify="center" p={6}>
         <Text color="resultLabel" textAlign="center" fontSize="md">
           Enter your loan details and click calculate to see your repayment summary
         </Text>
@@ -36,7 +36,7 @@ export function RepaymentSummaryCard({ result }: RepaymentSummaryCardProps) {
   };
 
   return (
-    <Box display="flex" flexDirection="column" h="full">
+    <Box display="flex" flexDirection="column" flex="1" w="full">
       <Stack gap={4} mb={6}>
         <ResultStat
           label="Down Payment"
