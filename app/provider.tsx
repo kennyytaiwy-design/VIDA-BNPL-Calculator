@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { ChakraProvider } from "@chakra-ui/react";
 import { system } from "./theme";
 import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
-import { useEffect } from "react";
+import EmotionRegistry from "./EmotionRegistry";
 
 export function Provider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -24,9 +25,11 @@ export function Provider({ children }: { children: React.ReactNode }) {
 
   return (
     <PostHogProvider client={posthog}>
-      <ChakraProvider value={system}>
-        {children}
-      </ChakraProvider>
+      <EmotionRegistry>
+        <ChakraProvider value={system}>
+          {children}
+        </ChakraProvider>
+      </EmotionRegistry>
     </PostHogProvider>
   );
 }
