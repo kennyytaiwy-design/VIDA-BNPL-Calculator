@@ -7,7 +7,7 @@ import { ResultStat } from "./ResultStat";
 import { usePostHog } from "posthog-js/react";
 
 const WHATSAPP_URL =
-  "https://wa.me/2349069890516?text=Hi,%20I%20am%20interested%20in%20your%20Buy%20Now%20Pay%20Later%20Service";
+  "https://app.mycreditprofile.me/register?code=FhJdxPVU4QJ";
 
 interface RepaymentSummaryCardProps {
   result: RepaymentResult | null;

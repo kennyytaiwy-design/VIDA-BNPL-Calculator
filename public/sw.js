@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bnpl-calc-cache-v1';
+const CACHE_NAME = 'bnpl-calc-cache-v2';
 
 const PRECACHE_ASSETS = [
   '/',
