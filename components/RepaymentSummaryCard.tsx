@@ -7,7 +7,7 @@ import { ResultStat } from "./ResultStat";
 import { usePostHog } from "posthog-js/react";
 
 const WHATSAPP_URL =
-  "https://app.mycreditprofile.me/register?code=FhJdxPVU4QJ";
+  "https://app.mycreditprofile.me/alt/register?code=FhJdxPVU4QJ";
 
 interface RepaymentSummaryCardProps {
   result: RepaymentResult | null;
