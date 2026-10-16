@@ -52,12 +52,16 @@ export const RESERVED_SLUGS: ReadonlyArray<string> = [
   "api",
   "_next",
   "manifest.webmanifest",
+  "manifest.json",
   "sw.js",
   "offline",
   "favicon.ico",
   "robots.txt",
   "sitemap.xml",
   "default",
+  // Top-level folders in public/ (these would otherwise pass SLUG_PATTERN).
+  "icons",
+  "fonts",
 ];
 
 // Valid slug pattern: lowercase alphanumeric segments separated by single hyphens.
