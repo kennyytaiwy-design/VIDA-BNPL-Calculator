@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { Box, Button, Field, Input, Stack, Text, Flex } from "@chakra-ui/react";
-import { calculateRepayment, RepaymentResult } from "@/lib/calculateRepayment";
+import { calculateRepayment, getMinimumDownPayment, getTotalFees, RepaymentResult } from "@/lib/calculateRepayment";
+import type { MerchantConfig } from "@/src/config/merchants";
 import { usePostHog } from "posthog-js/react";
 
 const InfoIcon = ({ color = "amberIcon", size = 16 }: { color?: string; size?: number }) => {
@@ -55,11 +56,17 @@ function formatCurrencyString(rawInput: string): { display: string; numeric: num
   return { display, numeric, cleaned };
 }
 
+/** Format a plain number as a Naira amount string (no ₦ prefix), e.g. 6,300.00 */
+function formatNairaAmount(value: number): string {
+  return value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 interface LoanDetailsFormProps {
+  merchant: MerchantConfig;
   onCalculate?: (result: RepaymentResult) => void;
 }
 
-export function LoanDetailsForm({ onCalculate }: LoanDetailsFormProps) {
+export function LoanDetailsForm({ merchant, onCalculate }: LoanDetailsFormProps) {
   const posthog = usePostHog();
   const [itemCostRaw, setItemCostRaw] = useState<string>("");
   const [downPaymentRaw, setDownPaymentRaw] = useState<string>("");
@@ -73,38 +80,86 @@ export function LoanDetailsForm({ onCalculate }: LoanDetailsFormProps) {
   const downPayment = downPaymentData.numeric;
   const tenor = tenorRaw ? parseInt(tenorRaw, 10) : 0;
 
-  // 30% threshold calculation
-  const required30Percent = itemCost > 0 ? itemCost * 0.3 : 0;
+  // ── Computed thresholds ─────────────────────────────────────────────────────
 
-  // Helper text minimum required calculation
-  const minRequiredFormatted = itemCost > 0
-    ? required30Percent.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : "0.00";
+  const hasMinDownPayment = merchant.minDownPaymentPct > 0;
 
-  // Validation state
+  /**
+   * Total fees the down payment must cover, via the shared helper.
+   * This is the single source of truth — same value used in calculateRepayment.
+   */
+  const totalFees = itemCost > 0 ? getTotalFees(itemCost, merchant) : 0;
+
+  /**
+   * The true minimum the borrower must pay (whole-naira ceiling of the larger of
+   * the pct floor and the total fees). Enforced by validation and shown in messages.
+   */
+  const minimumDownPayment = itemCost > 0 ? getMinimumDownPayment(itemCost, merchant) : 0;
+
+  /**
+   * Which constraint is the binding one when the down payment is below the minimum?
+   *   "fees" → the fee floor is the binding constraint (fees > pct floor).
+   *   "pct"  → the percentage floor wins (or they are equal — pct shown for clarity).
+   */
+  const bindingConstraint: "fees" | "pct" = totalFees > (merchant.minDownPaymentPct / 100) * itemCost
+    ? "fees"
+    : "pct";
+
+  // ── Validation ──────────────────────────────────────────────────────────────
+
   const isItemCostValid = itemCost > 0;
   const isDownPaymentEntered = downPaymentRaw.trim() !== "";
-  
-  // Down payment valid: >= 30% AND < itemCost
-  const isDownPaymentValid = isDownPaymentEntered && downPayment >= required30Percent && downPayment < itemCost;
-  const isTenorValid = tenor >= 1 && tenor <= 12;
 
-  // Error checks
-  const isDownPaymentTooLow = isItemCostValid && isDownPaymentEntered && downPayment < required30Percent;
+  const isDownPaymentBelowMin = isItemCostValid && isDownPaymentEntered && downPayment < minimumDownPayment;
   const isDownPaymentTooHigh = isItemCostValid && isDownPaymentEntered && downPayment >= itemCost;
 
-  // Red error state triggers ONLY after user moves off focus (blurs) from down payment input
-  const isDownPaymentInvalid = isDownPaymentBlurred && (isDownPaymentTooLow || isDownPaymentTooHigh);
+  const isDownPaymentInvalid = isDownPaymentBlurred && (isDownPaymentBelowMin || isDownPaymentTooHigh);
+  const isDownPaymentValid = isDownPaymentEntered && !isDownPaymentBelowMin && !isDownPaymentTooHigh;
 
-  const helperColor = isDownPaymentInvalid ? "error" : "resultLabel";
-  const helperIconColor = isDownPaymentInvalid ? "error" : "amberIcon";
-
-  let helperMessage = `Note that the down payment cannot be less than ₦${minRequiredFormatted}`;
-  if (isDownPaymentBlurred && isDownPaymentTooHigh) {
-    helperMessage = "Note that the down payment must be less than the item cost";
-  }
-
+  const isTenorValid = tenor >= 1 && tenor <= 12;
   const isFormValid = isItemCostValid && isDownPaymentValid && isTenorValid;
+
+  // ── Message logic ───────────────────────────────────────────────────────────
+  //
+  // Priority (only one message shown at a time):
+  //   1. "too high" — down payment >= item cost (all merchants, incl. minDownPaymentPct = 0)
+  //   2. "fee error" — below minimum because fees are the binding constraint
+  //   3. amber pct helper — shown whenever minDownPaymentPct > 0 (always visible for those merchants)
+  //
+  // "too high" takes priority over the fee error because a user who has gone
+  // above the item cost must fix that first before the fee message is relevant.
+
+  // Only active after blur.
+  const showTooHighError  = isDownPaymentBlurred && isDownPaymentTooHigh;
+  const showFeeError      = isDownPaymentBlurred && isDownPaymentBelowMin && !isDownPaymentTooHigh && bindingConstraint === "fees";
+  const showPctError      = isDownPaymentBlurred && isDownPaymentBelowMin && !isDownPaymentTooHigh && bindingConstraint === "pct";
+
+  // Amber block: visible whenever minDownPaymentPct > 0, unless the fee error or
+  // "too high" error is already covering the full message area.
+  const showAmberBlock = hasMinDownPayment && !showFeeError && !showTooHighError;
+
+  // Amber text turns red when the pct constraint is the active error.
+  const amberHelperColor     = showPctError ? "error" : "resultLabel";
+  const amberHelperIconColor = showPctError ? "error" : "amberIcon";
+
+  // Amber message: show minimumDownPayment (same enforced number). The reason in
+  // brackets must match whichever constraint actually sets that number.
+  const amberHelperReason = bindingConstraint === "fees"
+    ? "to cover the fees"
+    : `${merchant.minDownPaymentPct}% of item cost`;
+  const amberHelperMessage = `Note that the down payment cannot be less than ₦${formatNairaAmount(minimumDownPayment)} (${amberHelperReason})`;
+
+  // Fee error message: uses minimumDownPayment (the enforced, rounded number).
+  const feeErrorMessage = `Down payment must cover the fees (₦${formatNairaAmount(minimumDownPayment)})`;
+
+  // "Too high" message: always in error style, shown for every merchant.
+  const tooHighMessage = "Note that the down payment must be less than the item cost";
+
+  // Input border / focus colour
+  const inputBorderColor      = isDownPaymentInvalid ? "error" : "border";
+  const inputFocusBorderColor = isDownPaymentInvalid ? "error" : "primary";
+
+  // ── Event handlers ──────────────────────────────────────────────────────────
 
   const handleItemCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -120,11 +175,14 @@ export function LoanDetailsForm({ onCalculate }: LoanDetailsFormProps) {
 
   const handleDownPaymentBlur = () => {
     if (downPaymentRaw.trim() !== "") {
-      if (!isDownPaymentBlurred && itemCost > 0 && downPayment < required30Percent) {
-        posthog.capture('calculator_validation_error', {
+      if (!isDownPaymentBlurred && isDownPaymentBelowMin) {
+        posthog.capture("calculator_validation_error", {
+          merchant_slug: merchant.slug,
+          merchant_name: merchant.name,
           item_cost: itemCost,
           down_payment_entered: downPayment,
-          minimum_required: required30Percent
+          minimum_required: minimumDownPayment,
+          binding_constraint: bindingConstraint,
         });
       }
       setIsDownPaymentBlurred(true);
@@ -139,20 +197,24 @@ export function LoanDetailsForm({ onCalculate }: LoanDetailsFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isFormValid) return;
-    const result = calculateRepayment(itemCost, downPayment, tenor);
+    const result = calculateRepayment(itemCost, downPayment, tenor, merchant);
     console.log("Calculated Repayment Result:", result);
 
-    posthog.capture('calculator_submitted', {
+    posthog.capture("calculator_submitted", {
+      merchant_slug: merchant.slug,
+      merchant_name: merchant.name,
       item_cost: itemCost,
       down_payment: downPayment,
       tenor_months: tenor,
-      monthly_repayment: result.monthlyRepayment
+      monthly_repayment: result.monthlyRepayment,
     });
 
     if (onCalculate) {
       onCalculate(result);
     }
   };
+
+  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <Box as="form" onSubmit={handleSubmit} display="flex" flexDirection="column" flex="1" w="full">
@@ -188,20 +250,49 @@ export function LoanDetailsForm({ onCalculate }: LoanDetailsFormProps) {
             placeholder="Enter amount"
             h="48px"
             w="full"
-            borderColor={isDownPaymentInvalid ? "error" : "border"}
+            borderColor={inputBorderColor}
             borderRadius="md"
             bg="white"
             fontSize="md"
-            _focus={{ borderColor: isDownPaymentInvalid ? "error" : "primary", boxShadow: "none" }}
+            _focus={{ borderColor: inputFocusBorderColor, boxShadow: "none" }}
           />
-          <Flex align="flex-start" gap={1.5} mt={2}>
-            <Box mt={0.5} flexShrink={0}>
-              <InfoIcon color={helperIconColor} size={16} />
-            </Box>
-            <Text fontSize={{ base: "sm", md: "16px" }} color={helperColor} lineHeight="short">
-              {helperMessage}
-            </Text>
-          </Flex>
+
+          {/* 1. "Too high" error — all merchants, incl. those with minDownPaymentPct = 0 */}
+          {showTooHighError && (
+            <Flex align="flex-start" gap={1.5} mt={2}>
+              <Box mt={0.5} flexShrink={0}>
+                <InfoIcon color="error" size={16} />
+              </Box>
+              <Text fontSize={{ base: "sm", md: "16px" }} color="error" lineHeight="short">
+                {tooHighMessage}
+              </Text>
+            </Flex>
+          )}
+
+          {/* 2. Fee error — binding constraint is the fee floor (not pct, not "too high") */}
+          {showFeeError && (
+            <Flex align="flex-start" gap={1.5} mt={2}>
+              <Box mt={0.5} flexShrink={0}>
+                <InfoIcon color="error" size={16} />
+              </Box>
+              <Text fontSize={{ base: "sm", md: "16px" }} color="error" lineHeight="short">
+                {feeErrorMessage}
+              </Text>
+            </Flex>
+          )}
+
+          {/* 3. Amber pct helper — only for merchants with minDownPaymentPct > 0,
+                 hidden when fee error or "too high" is active */}
+          {showAmberBlock && (
+            <Flex align="flex-start" gap={1.5} mt={2}>
+              <Box mt={0.5} flexShrink={0}>
+                <InfoIcon color={amberHelperIconColor} size={16} />
+              </Box>
+              <Text fontSize={{ base: "sm", md: "16px" }} color={amberHelperColor} lineHeight="short">
+                {amberHelperMessage}
+              </Text>
+            </Flex>
+          )}
         </Field.Root>
 
         {/* Tenor Field */}

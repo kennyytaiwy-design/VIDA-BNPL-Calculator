@@ -7,6 +7,7 @@ import { PageFooter } from "@/components/PageFooter";
 import { LoanDetailsForm } from "@/components/LoanDetailsForm";
 import { RepaymentSummaryCard } from "@/components/RepaymentSummaryCard";
 import { RepaymentResult } from "@/lib/calculateRepayment";
+import { DEFAULT_MERCHANT } from "@/src/config/merchants";
 
 export default function Home() {
   const [repaymentResult, setRepaymentResult] = useState<RepaymentResult | null>(null);
@@ -50,7 +51,7 @@ export default function Home() {
               </Heading>
             </Box>
             <Box p={{ base: 4, md: 6 }} flex="1" display="flex" flexDirection="column">
-              <LoanDetailsForm onCalculate={handleCalculate} />
+              <LoanDetailsForm merchant={DEFAULT_MERCHANT} onCalculate={handleCalculate} />
             </Box>
           </Box>
 
