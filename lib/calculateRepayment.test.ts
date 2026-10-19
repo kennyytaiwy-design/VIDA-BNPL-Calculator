@@ -206,6 +206,23 @@ describe("calculateRepayment — Gloworld merchant", () => {
   });
 });
 
+describe("calculateRepayment — BuyCarNg merchant", () => {
+  it("itemCost=1,000,000 / downPayment=400,000 / tenor=4 → 192,455", () => {
+    // managementFee = 2.5% × 1,000,000 = 25,000; totalFees = 25,000 + 6,000 = 31,000
+    // effectiveDownPayment = 400,000 - 31,000 = 369,000
+    // loanAmount = 1,000,000 - 369,000 = 631,000
+    // raw = (631,000 + 0.055 × 631,000 × 4) / 4 = 769,820 / 4 = 192,455
+    const buycarng = MERCHANTS.buycarng;
+    const result = calculateRepayment(1_000_000, 400_000, 4, buycarng);
+    expect(result).toEqual({
+      loanAmount: 631_000,
+      monthlyRepayment: 192_455,
+      downPayment: 400_000,
+      tenor: 4,
+    });
+  });
+});
+
 // ─── calculateRepayment — rounding-noise cases (zero-fee merchant) ────────────
 
 describe("calculateRepayment — floating-point rounding guard", () => {

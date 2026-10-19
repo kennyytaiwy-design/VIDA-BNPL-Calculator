@@ -43,6 +43,14 @@ export const MERCHANTS: Record<string, MerchantConfig> = {
     fixedFee: 0,
     minDownPaymentPct: 30,
   },
+  buycarng: {
+    slug: "buycarng",
+    name: "BuyCarNg",
+    monthlyRatePct: 5.5,
+    managementFeePct: 2.5,
+    fixedFee: 6000,
+    minDownPaymentPct: 30,
+  },
 };
 
 // ─── Reserved slugs ────────────────────────────────────────────────────────────
