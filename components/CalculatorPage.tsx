@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePostHog } from "posthog-js/react";
 import { Box, Container, Flex, Heading } from "@chakra-ui/react";
 import { PageHeader } from "@/components/PageHeader";
 import { PageFooter } from "@/components/PageFooter";
@@ -19,6 +20,20 @@ interface CalculatorPageProps {
  */
 export function CalculatorPage({ merchant }: CalculatorPageProps) {
   const [repaymentResult, setRepaymentResult] = useState<RepaymentResult | null>(null);
+  const posthog = usePostHog();
+
+  // "calculator_viewed" fires once each time a calculator opens, and again if the
+  // merchant changes. The ref keeps React strict mode (which runs effects twice
+  // in development) from sending it twice.
+  const lastViewedSlug = useRef<string | null>(null);
+  useEffect(() => {
+    if (lastViewedSlug.current === merchant.slug) return;
+    lastViewedSlug.current = merchant.slug;
+    posthog.capture("calculator_viewed", {
+      merchant_slug: merchant.slug,
+      merchant_name: merchant.name,
+    });
+  }, [posthog, merchant.slug, merchant.name]);
 
   const handleCalculate = (result: RepaymentResult) => {
     console.log("Lifted Repayment Result in app/page.tsx:", result);
@@ -81,7 +96,7 @@ export function CalculatorPage({ merchant }: CalculatorPageProps) {
               </Heading>
             </Box>
             <Box p={{ base: 4, md: 6 }} flex="1" display="flex" flexDirection="column">
-              <RepaymentSummaryCard result={repaymentResult} />
+              <RepaymentSummaryCard merchant={merchant} result={repaymentResult} />
             </Box>
           </Box>
         </Flex>

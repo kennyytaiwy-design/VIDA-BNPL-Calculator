@@ -1,0 +1,50 @@
+---
+description: VIDA BNPL Calculator — project context, rules, formula and checked results
+alwaysApply: true
+---
+
+# VIDA BNPL Calculator
+
+## How to work with me
+- I am a product designer / PM, not an engineer. Explain in very simple words, no jargon.
+- If anything is unclear, ASK. Never guess business rules.
+- Never say something is done or verified without evidence pasted as TEXT (file contents, diffs, raw command output, full test lists). If you take screenshots, open them and describe what you see.
+- Do NOT `git commit` unless I say "commit". Never push or deploy unless I say so.
+- Test scripts and screenshots go in `screenshots-*` folders, which must stay in `.gitignore`.
+- Do not change the calculation formula or the design unless I ask.
+- Test PWA / service-worker behaviour ONLY on a production build (`npm run build`, then `npm run start` on a free port), never on the dev server.
+
+## The project
+- Buy-now-pay-later repayment calculator PWA for "mycredit profile (VIDA)" at VeendHQ (Nigerian fintech). Live: https://vida-bnpl-calculator.vercel.app/
+- Stack: Next.js 16 App Router (build uses `--webpack`; Chakra UI v3 does not work with Turbopack), React + TypeScript strict, Chakra UI v3 custom theme, Clash Display (headings) + Clash Grotesk (body) self-hosted woff2, PostHog, Vitest, Playwright (dev only), Vercel. No backend, no database.
+- Next.js 16: middleware is `proxy.ts`; page `params` is a Promise. If unsure, read `node_modules/next/dist/docs`.
+- Design tokens: primary #0F0D35, background #F9FAFB, border #DCDBEA, resultValue #060089, resultLabel #565568, resultCardBg #F5F5FF, amberIcon #E5A330, disabledButton #9F9EAE, error #FF5656.
+
+## Merchants
+- "/" is the default calculator. Each merchant has its own link, e.g. `/gloworld`, `/buycarng`.
+- Merchants live ONLY in `src/config/merchants.ts` (no database). Per merchant: `monthlyRatePct` (7.5 = 7.5% per MONTH), `managementFeePct`, `fixedFee` (can be 0), `minDownPaymentPct` (can be 0). Nothing else differs.
+- Slugs: lowercase letters, numbers, hyphens; unique; not in `RESERVED_SLUGS`. `validateMerchants()` runs at load and fails the build on bad entries.
+- Current: default 7.5 / 1.5 / 6000 / 30; gloworld 7.5 / 1.5 / 6000 / 30; buycarng 5.5 / 2.5 / 6000 / 30.
+
+## Formula (do not change)
+```
+managementFee        = managementFeePct/100 × itemCost
+totalFees            = managementFee + fixedFee
+effectiveDownPayment = downPayment − totalFees
+loanAmount           = itemCost − effectiveDownPayment
+monthlyRepayment     = Math.ceil(Number(((loanAmount + monthlyRatePct/100 × loanAmount × tenor) / tenor).toFixed(6)))
+```
+Hand-checked results (itemCost / downPayment / tenor → monthly):
+- Default (7.5/1.5/6000/30): 1,000,000 / 400,000 / 4 → 201,825 · 20,000 / 6,300 / 4 → 6,500 · 1,000,333 / 300,100 / 4 → 234,403
+- Test merchant 5.5/0/0/30 (defined inside the test file): 1,000,000 / 400,000 / 4 → 183,000 · 20,000 / 6,000 / 4 → 4,270
+- BuyCarNg (5.5/2.5/6000/30): 1,000,000 / 400,000 / 4 → 192,455
+- Tests must NOT depend on real merchants: use a TEST_MERCHANT inside the test file.
+
+## Decisions already made
+- Minimum down payment = higher of (minDownPaymentPct of item cost) and (total fees), rounded UP to a whole naira. Equal to the minimum is allowed. It must also be strictly less than the item cost.
+- When fees are higher: error "Down payment must cover the fees (₦X)" and amber hint "(to cover the fees)". When the percentage is higher: amber hint "(30% of item cost)".
+- Slugs are case-insensitive: `/GloWorld` → 308 → `/gloworld`, query string kept, done in `proxy.ts`. Only single-segment paths with no dot.
+- Unknown slugs show "Merchant not found" (`app/[merchant]/not-found.tsx`). `getMerchant()` never falls back to the default and is safe against "constructor" / "__proto__".
+- Only "/" is installable: the manifest link lives in `app/page.tsx` metadata, not the root layout.
+- Offline (`public/sw.js`): pages network-first, saved per exact path (no query string) with all their files; offline serves the saved copy for that exact path or `/offline.html`. A saved page is never shown at another path. Max 10 saved pages; files a saved page needs are never deleted. Bump `CACHE_VERSION` when sw.js changes.
+- PostHog: every `posthog.capture` sends `merchant_slug` and `merchant_name` ("default" / "Default" on "/"). Never `posthog.register` or `identify` the merchant. `calculator_viewed` fires once per calculator page open. Always use the `usePostHog()` hook in components. PostHog's session-entry / previous-page fields are dropped via `property_denylist`.

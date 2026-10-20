@@ -2,12 +2,12 @@ import { describe, it, expect } from "vitest";
 import { getLowercaseRedirectPath } from "./slugHelper";
 
 describe("getLowercaseRedirectPath", () => {
-  it('"/GloWorld" → "/gloworld" (redirects mixed-case slug)', () => {
-    expect(getLowercaseRedirectPath("/GloWorld")).toBe("/gloworld");
+  it('"/TestShop" → "/testshop" (redirects mixed-case slug)', () => {
+    expect(getLowercaseRedirectPath("/TestShop")).toBe("/testshop");
   });
 
-  it('"/gloworld" → null (already canonical, no redirect)', () => {
-    expect(getLowercaseRedirectPath("/gloworld")).toBeNull();
+  it('"/testshop" → null (already canonical, no redirect)', () => {
+    expect(getLowercaseRedirectPath("/testshop")).toBeNull();
   });
 
   it('"/" → null (root path is never redirected)', () => {

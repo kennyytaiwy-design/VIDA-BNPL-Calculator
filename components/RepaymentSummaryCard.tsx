@@ -3,6 +3,7 @@
 import React from "react";
 import { Box, Button, Flex, Text, Stack } from "@chakra-ui/react";
 import { RepaymentResult } from "@/lib/calculateRepayment";
+import type { MerchantConfig } from "@/src/config/merchants";
 import { ResultStat } from "./ResultStat";
 import { usePostHog } from "posthog-js/react";
 
@@ -10,10 +11,11 @@ const WHATSAPP_URL =
   "https://app.mycreditprofile.me/alt/register?code=FhJdxPVU4QJ";
 
 interface RepaymentSummaryCardProps {
+  merchant: MerchantConfig;
   result: RepaymentResult | null;
 }
 
-export function RepaymentSummaryCard({ result }: RepaymentSummaryCardProps) {
+export function RepaymentSummaryCard({ merchant, result }: RepaymentSummaryCardProps) {
   const posthog = usePostHog();
 
   if (!result) {
@@ -31,7 +33,10 @@ export function RepaymentSummaryCard({ result }: RepaymentSummaryCardProps) {
   };
 
   const handleGetStarted = () => {
-    posthog.capture("whatsapp_cta_clicked");
+    posthog.capture("whatsapp_cta_clicked", {
+      merchant_slug: merchant.slug,
+      merchant_name: merchant.name,
+    });
     window.open(WHATSAPP_URL, "_blank", "noopener,noreferrer");
   };
 

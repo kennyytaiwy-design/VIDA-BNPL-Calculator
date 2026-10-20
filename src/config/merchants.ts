@@ -38,9 +38,9 @@ export const MERCHANTS: Record<string, MerchantConfig> = {
   gloworld: {
     slug: "gloworld",
     name: "Gloworld",
-    monthlyRatePct: 5.5,
-    managementFeePct: 0,
-    fixedFee: 0,
+    monthlyRatePct: 7.5,
+    managementFeePct: 1.5,
+    fixedFee: 6000,
     minDownPaymentPct: 30,
   },
   buycarng: {

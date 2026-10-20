@@ -10,7 +10,22 @@ import {
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
-const gloworld = MERCHANTS["gloworld"];
+/**
+ * Test-only merchant (5.5% / no fees / 30% minimum). Defined here so the tests
+ * never depend on real merchant rates in src/config/merchants.ts.
+ */
+const TEST_MERCHANT: MerchantConfig = {
+  slug: "test-merchant",
+  name: "Test Merchant",
+  monthlyRatePct: 5.5,
+  managementFeePct: 0,
+  fixedFee: 0,
+  minDownPaymentPct: 30,
+};
+
+/** Lookup tests use whichever merchant is listed first in the real registry. */
+const FIRST_SLUG = Object.keys(MERCHANTS)[0];
+const firstMerchant = MERCHANTS[FIRST_SLUG];
 
 /** Zero-fee merchant used for rounding-noise and edge-case tests. */
 const zeroMerchant: MerchantConfig = {
@@ -25,12 +40,12 @@ const zeroMerchant: MerchantConfig = {
 // ─── getMerchant ──────────────────────────────────────────────────────────────
 
 describe("getMerchant", () => {
-  it("returns gloworld config for exact slug", () => {
-    expect(getMerchant("gloworld")).toEqual(gloworld);
+  it("returns the first registered merchant for its exact slug", () => {
+    expect(getMerchant(FIRST_SLUG)).toEqual(firstMerchant);
   });
 
-  it('returns gloworld config for "  GloWorld " (trims + lowercases)', () => {
-    expect(getMerchant("  GloWorld ")).toEqual(gloworld);
+  it("returns the first registered merchant for an upper-case, padded slug (trims + lowercases)", () => {
+    expect(getMerchant(`  ${FIRST_SLUG.toUpperCase()} `)).toEqual(firstMerchant);
   });
 
   it('returns null for ""', () => {
@@ -190,33 +205,16 @@ describe("calculateRepayment — DEFAULT_MERCHANT", () => {
   });
 });
 
-// ─── calculateRepayment — Gloworld ────────────────────────────────────────────
+// ─── calculateRepayment — TEST_MERCHANT ───────────────────────────────────────
 
-describe("calculateRepayment — Gloworld merchant", () => {
+describe("calculateRepayment — TEST_MERCHANT (5.5% / no fees)", () => {
   it("itemCost=1,000,000 / downPayment=400,000 / tenor=4 → 183,000", () => {
     // loanAmount = 1,000,000 - 400,000 = 600,000
     // raw = (600,000 + 0.055 × 600,000 × 4) / 4 = 732,000 / 4 = 183,000
-    const result = calculateRepayment(1_000_000, 400_000, 4, gloworld);
+    const result = calculateRepayment(1_000_000, 400_000, 4, TEST_MERCHANT);
     expect(result).toEqual({
       loanAmount: 600_000,
       monthlyRepayment: 183_000,
-      downPayment: 400_000,
-      tenor: 4,
-    });
-  });
-});
-
-describe("calculateRepayment — BuyCarNg merchant", () => {
-  it("itemCost=1,000,000 / downPayment=400,000 / tenor=4 → 192,455", () => {
-    // managementFee = 2.5% × 1,000,000 = 25,000; totalFees = 25,000 + 6,000 = 31,000
-    // effectiveDownPayment = 400,000 - 31,000 = 369,000
-    // loanAmount = 1,000,000 - 369,000 = 631,000
-    // raw = (631,000 + 0.055 × 631,000 × 4) / 4 = 769,820 / 4 = 192,455
-    const buycarng = MERCHANTS.buycarng;
-    const result = calculateRepayment(1_000_000, 400_000, 4, buycarng);
-    expect(result).toEqual({
-      loanAmount: 631_000,
-      monthlyRepayment: 192_455,
       downPayment: 400_000,
       tenor: 4,
     });
@@ -299,11 +297,11 @@ describe("getMinimumDownPayment", () => {
     expect(getMinimumDownPayment(100_000, m)).toBe(7_500);
   });
 
-  it("gloworld, itemCost 100,000 → 30,000 (pct floor wins, no fees)", () => {
+  it("TEST_MERCHANT, itemCost 100,000 → 30,000 (pct floor wins, no fees)", () => {
     // pctFloor = 30% × 100,000 = 30,000
     // totalFees = 0
     // max(30,000, 0) = 30,000
-    expect(getMinimumDownPayment(100_000, gloworld)).toBe(30_000);
+    expect(getMinimumDownPayment(100_000, TEST_MERCHANT)).toBe(30_000);
   });
 
   it("all-zero merchant, any itemCost → 0", () => {
