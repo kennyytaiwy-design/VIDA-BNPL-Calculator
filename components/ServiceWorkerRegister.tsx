@@ -10,6 +10,23 @@ export function ServiceWorkerRegister() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
+    // In development, Next.js chunk URLs are not content-hashed, so the SW's
+    // cache-first rule for /_next/static/* serves stale client JS and causes
+    // hydration mismatches. Remove any existing SW + its caches and stop here.
+    if (process.env.NODE_ENV !== "production") {
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((reg) => reg.unregister());
+      });
+      if ("caches" in window) {
+        caches.keys().then((keys) => {
+          keys
+            .filter((key) => key.startsWith("bnpl-"))
+            .forEach((key) => caches.delete(key));
+        });
+      }
+      return;
+    }
+
     // Was this page load handled by the service worker? On a first visit it
     // was not, so the page would never be saved for offline use. In that case
     // we ask the service worker to save it once it is ready.

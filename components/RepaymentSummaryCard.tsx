@@ -37,7 +37,7 @@ export function RepaymentSummaryCard({ merchant, result }: RepaymentSummaryCardP
       merchant_slug: merchant.slug,
       merchant_name: merchant.name,
     });
-    window.open(WHATSAPP_URL, "_blank", "noopener,noreferrer");
+    window.open(merchant.getStartedUrl ?? WHATSAPP_URL, "_blank", "noopener,noreferrer");
   };
 
   return (

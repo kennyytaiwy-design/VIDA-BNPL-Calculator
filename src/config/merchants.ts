@@ -16,6 +16,8 @@ export type MerchantConfig = {
   fixedFee: number;
   /** Minimum down payment as a percentage of itemCost, e.g. 30. Use 0 to disable the minimum. */
   minDownPaymentPct: number;
+  /** Optional "Get Started" CTA URL. Falls back to the default registration link if omitted. */
+  getStartedUrl?: string;
 };
 
 // ─── Default merchant (platform baseline) ─────────────────────────────────────
@@ -50,6 +52,15 @@ export const MERCHANTS: Record<string, MerchantConfig> = {
     managementFeePct: 2.5,
     fixedFee: 6000,
     minDownPaymentPct: 30,
+  },
+  greenbay: {
+    slug: "greenbay",
+    name: "Greenbay",
+    monthlyRatePct: 7.5,
+    managementFeePct: 0,
+    fixedFee: 6000,
+    minDownPaymentPct: 30,
+    getStartedUrl: "https://bit.ly/GreenbayMarket",
   },
 };
 
