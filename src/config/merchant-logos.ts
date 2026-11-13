@@ -39,6 +39,20 @@ export const MERCHANT_LOGOS: Record<string, MerchantLogoData> = {
     width: 260,
     height: 55,
   },
+  strideev: {
+    src: "/logos/strideev-logo.png",
+    // 752 × 184 px source → rendered at height 55 px (proportional width)
+    // 752 / 184 × 55 = 225 px wide
+    width: 225,
+    height: 55,
+  },
+  itso: {
+    src: "/logos/itso-logo.png",
+    // 886 × 176 px source → rendered at height 55 px (proportional width)
+    // 886 / 176 × 55 = 277 px wide
+    width: 277,
+    height: 55,
+  },
 };
 
 /**
