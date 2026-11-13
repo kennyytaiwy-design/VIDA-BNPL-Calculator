@@ -49,7 +49,10 @@ export function CalculatorPage({ merchant }: CalculatorPageProps) {
         </span>
       )}
       <Container maxW="6xl" mx="auto" px={{ base: 4, md: 8 }}>
-        <PageHeader />
+        <PageHeader
+          merchantSlug={merchant.slug}
+          merchantName={merchant.name}
+        />
 
         <Flex
           direction={{ base: "column", md: "row" }}

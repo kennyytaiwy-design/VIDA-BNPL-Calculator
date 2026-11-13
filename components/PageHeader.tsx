@@ -1,30 +1,24 @@
-"use client";
-
-import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { Box, Heading, Text } from "@chakra-ui/react";
 import { getMerchantLogo } from "@/src/config/merchant-logos";
-import { getMerchant } from "@/src/config/merchants";
+
+interface PageHeaderProps {
+  /** Merchant slug — used to look up logo from the client-side logo registry. */
+  merchantSlug?: string;
+  /** Merchant display name — used for the logo alt text. */
+  merchantName?: string;
+}
 
 /**
  * Page header with logo, title and subtitle.
  *
- * The merchant slug is derived from usePathname() rather than from RSC props.
- * usePathname() is hydration-safe: Next.js guarantees it returns the same path
- * on both the server SSR pass and the client hydration pass, eliminating the
- * mismatch that occurred when merchantSlug arrived via the RSC→Client boundary
- * (where the payload can be missing on the client's first render).
- *
- * No props needed — PageHeader is fully self-contained.
+ * Logo resolution is done client-side via getMerchantLogo() rather than
+ * relying on optional RSC prop fields, which Next.js can silently drop
+ * across the Server → Client serialisation boundary.
  */
-export function PageHeader() {
-  const pathname = usePathname() ?? "";
-  // "/greenbay" → "greenbay", "/" → "" (root page uses DEFAULT_LOGO)
-  const slug = pathname.split("/").filter(Boolean)[0] ?? "";
-
-  const merchant = getMerchant(slug);
-  const logo = getMerchantLogo(slug);
-  const logoAlt = merchant ? `${merchant.name} Logo` : "VIDA Logo";
+export function PageHeader({ merchantSlug, merchantName }: PageHeaderProps) {
+  const logo = getMerchantLogo(merchantSlug);
+  const logoAlt = merchantSlug && merchantName ? `${merchantName} Logo` : "VIDA Logo";
 
   return (
     <Box textAlign="center" mb={{ base: 6, md: 10 }}>
