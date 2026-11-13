@@ -78,6 +78,14 @@ export const MERCHANTS: Record<string, MerchantConfig> = {
     fixedFee: 6000,
     minDownPaymentPct: 30,
   },
+  lumapower: {
+    slug: "lumapower",
+    name: "LumaPower",
+    monthlyRatePct: 5.5,
+    managementFeePct: 2.5,
+    fixedFee: 6000,
+    minDownPaymentPct: 30,
+  },
 };
 
 // ─── Reserved slugs ────────────────────────────────────────────────────────────

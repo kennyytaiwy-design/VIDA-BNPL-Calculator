@@ -53,6 +53,13 @@ export const MERCHANT_LOGOS: Record<string, MerchantLogoData> = {
     width: 277,
     height: 55,
   },
+  lumapower: {
+    src: "/logos/lumapower-logo.png",
+    // 874 × 184 px source → rendered at height 55 px (proportional width)
+    // 874 / 184 × 55 = 261 px wide
+    width: 261,
+    height: 55,
+  },
 };
 
 /**
