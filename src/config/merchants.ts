@@ -62,6 +62,14 @@ export const MERCHANTS: Record<string, MerchantConfig> = {
     minDownPaymentPct: 30,
     getStartedUrl: "https://bit.ly/GreenbayMarket",
   },
+  strideev: {
+    slug: "strideev",
+    name: "StrideEv",
+    monthlyRatePct: 7.5,
+    managementFeePct: 1.5,
+    fixedFee: 6000,
+    minDownPaymentPct: 30,
+  },
 };
 
 // ─── Reserved slugs ────────────────────────────────────────────────────────────
