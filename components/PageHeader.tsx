@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import { Box, Heading, Text } from "@chakra-ui/react";
 import { getMerchantLogo } from "@/src/config/merchant-logos";
