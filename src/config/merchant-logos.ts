@@ -60,6 +60,13 @@ export const MERCHANT_LOGOS: Record<string, MerchantLogoData> = {
     width: 261,
     height: 55,
   },
+  sims: {
+    src: "/logos/sims-logo.png",
+    // 1024 × 209 px source → rendered at height 55 px (proportional width)
+    // 1024 / 209 × 55 = 269 px wide
+    width: 269,
+    height: 55,
+  },
 };
 
 /**

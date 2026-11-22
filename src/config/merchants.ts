@@ -86,6 +86,14 @@ export const MERCHANTS: Record<string, MerchantConfig> = {
     fixedFee: 6000,
     minDownPaymentPct: 30,
   },
+  sims: {
+    slug: "sims",
+    name: "SIMS",
+    monthlyRatePct: 7.5,
+    managementFeePct: 1.5,
+    fixedFee: 6000,
+    minDownPaymentPct: 30,
+  },
 };
 
 // ─── Reserved slugs ────────────────────────────────────────────────────────────
