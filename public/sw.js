@@ -25,7 +25,7 @@
 // skipWaiting: yes (install).   clients.claim: yes (activate).
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const STATIC_CACHE = `bnpl-static-${CACHE_VERSION}`;
 const PAGES_CACHE = `bnpl-pages-${CACHE_VERSION}`;
 const META_CACHE = `bnpl-meta-${CACHE_VERSION}`;
