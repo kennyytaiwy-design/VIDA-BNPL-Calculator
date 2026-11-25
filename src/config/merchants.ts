@@ -89,7 +89,7 @@ export const MERCHANTS: Record<string, MerchantConfig> = {
   sims: {
     slug: "sims",
     name: "SIMS",
-    monthlyRatePct: 6.5,
+    monthlyRatePct: 6.0,
     managementFeePct: 2.5,
     fixedFee: 6000,
     minDownPaymentPct: 30,
